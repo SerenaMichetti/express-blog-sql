@@ -1,15 +1,27 @@
-const db = require('../data/db');
+const dbConnection = require('../data/db');
 
 //creo una funzione di index che restituisce tutti i post, se è presente una query tag restituisce solo i post che contengono quel tag
 function index(req, res) {
 
-    let results = posts;
-    
-    if (req.query.tags) {
+    const sqlQuery = 'SELECT * FROM posts';
 
-        results = posts.filter(post => post.tags.includes(req.query.tags))
-    }
-    res.json(results);
+    dbConnection.query(sqlQuery, (error, rows) => {
+
+        if (error) {
+            return res.status(500).json({ error: 'DB error', message: 'Errore nel recuperare i date dal db' })
+        }
+
+        let results = rows;
+
+        //se sono presenti dei query tags, filtro il risultato in base ai tag
+        // if (req.query.tags) {
+
+        //     results = rows.filter(post => post.tags.includes(req.query.tags))
+        // }
+
+        res.json(results);
+    });
+
 }
 
 //creo una funzione di showche restituisce un post in base all'id, se l'id non è un numero restituisce un errore 400, se l'id non esiste restituisce un errore 404
