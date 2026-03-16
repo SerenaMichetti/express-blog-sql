@@ -1,0 +1,17 @@
+{
+  "name": "express-blog-routing",
+  "version": "1.0.0",
+  "description": "",
+  "license": "ISC",
+  "author": "Serena Michetti",
+  "type": "commonjs",
+  "main": "index.js",
+  "scripts": {
+    "start": "node api.js",
+    "watch": "node --watch api.js"
+  },
+  "dependencies": {
+    "express": "^5.2.1",
+    "mysql2": "^3.20.0"
+  }
+}
