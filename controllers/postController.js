@@ -1,6 +1,6 @@
 const dbConnection = require('../data/db');
 
-//creo una funzione di index che restituisce tutti i post, se è presente una query tag restituisce solo i post che contengono quel tag
+//creo una funzione di index che restituisce tutti i post
 function index(req, res) {
 
     const sqlQuery = 'SELECT * FROM posts';
@@ -37,7 +37,7 @@ function show(req, res) {
     return res.json(result)
 }
 
-//creo una funzione di destroy che elimina un post in base all'id, se l'id non è un numero restituisce un errore 400, se l'id non esiste restituisce un errore 404
+//creo una funzione di destroy che elimina un post in base all'id
 function destroy(req, res) {
     const id = Number(req.params.id);
 
@@ -45,16 +45,19 @@ function destroy(req, res) {
         return res.status(400).json({ error: "User error", message: "L'ID deve essere un numero" });
     }
 
-    const result = posts.find(post => post.id == id);
+    const sqlQuery = "DELETE FROM posts WHERE id = ?";
 
-    if (!result) {
-        return res.status(404).json({ error: "Not found", message: `Post con id ${id} non trovato` });
-    }
-    const index = posts.indexOf(result);
-    posts.splice(index, 1);
-    console.log(`Post con id ${id} eliminato`);
-    console.log(posts);
-    return res.status(204).json();
+    const parametriQuery = [id];
+
+    dbConnection.query(sqlQuery, parametriQuery, error => {
+        if (error) {
+            return res.status(500).json({ error: 'DB error', message: 'Impossibile eliminare il post con id ${id}' })
+        }
+
+        return res.sendStatus(204);
+    })
+
+ 
 }
 
 // creo una funzione di store che crea un nuovo post, se il post viene creato con successo restituisce un messaggio di successo e il post creato e lo aggiunge all'array dei post
