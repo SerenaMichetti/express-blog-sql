@@ -26,30 +26,62 @@ function index(req, res) {
 
 //creo una funzione di showche restituisce un post in base all'id, se l'id non è un numero restituisce un errore 400, se l'id non esiste restituisce un errore 404
 function show(req, res) {
-    
+
     //se l'id non è un numero restituisco un errore 
     const id = Number(req.params.id);
     if (isNaN(id)) {
         return res.status(400).json({ error: 'User error', message: 'L\'ID deve essere un numero' })
     }
 
+    // la prima query per trovare il Post per id
     const sqlQuery = 'SELECT * FROM posts WHERE id = ?';
+
+    // la seconda query per trovare i tags relativi al post trovato con la prima query
+    const relationQuery = `SELECT tags.label
+    FROM tags
+    JOIN post_tag 
+    ON tags.id = post_tag.tag_id
+    WHERE post_tag.post_id = ?`
+
+    // il parametro di entrambe le query è l'id del post 
     const parametriQuery = [id];
 
+    // cerco il Post tramite query 
     dbConnection.query(sqlQuery, parametriQuery, (error, results) => {
 
-        //gestisco il caso in cui la query va in errore
-        if (error){
-            return res.status(500).json({error:"DB error", message: `Errore nel recuperare il post con id ${id} dal db`})
-        }
-        
-        //gestisco il caso in cui non ottengo risultati
-        if (results.length === 0) {
-            return res.status(404).json({error:"Not Found", message: `Post con id ${id} non trovato`})
+        //gestisco il caso in cui la query di ricerca del Post va in errore
+        if (error) {
+            return res.status(500).json({ error: "DB error", message: `Errore nel recuperare il post con id ${id} dal db` })
         }
 
-        //se tutto va bene, restituisco il post trovato
-        res.json(results[0]);
+        //gestisco il caso in cui non ottengo Post
+        if (results.length === 0) {
+            return res.status(404).json({ error: "Not Found", message: `Post con id ${id} non trovato` })
+        }
+
+        // se ho ottenuto il Post 
+        // lo metto in una variabile 
+        const post = results[0]
+
+        // cerco i suoi Tags tramite un'altra query
+        dbConnection.query(relationQuery, parametriQuery, (error, results) => {
+
+            // se la query di estrazione Tags va in errore
+            if (error) {
+                console.error(error);
+                return res.status(500).json({ error: "DB error", message: `Errore nel recuperare i tag del post con id ${id}` });
+            }
+
+            // se ho ottenuto i tags 
+            const tags = results;
+
+            // li metto nel Post che avevo trovato in precedenza 
+            post.tags = tags;
+
+            // restituisco la risposta che comprende il Post con i suoi Tags 
+             res.json(post);
+
+        })
 
     })
 
@@ -75,7 +107,7 @@ function destroy(req, res) {
         return res.sendStatus(204);
     })
 
- 
+
 }
 
 // creo una funzione di store che crea un nuovo post, se il post viene creato con successo restituisce un messaggio di successo e il post creato e lo aggiunge all'array dei post
