@@ -147,18 +147,6 @@ function store(req, res) {
 
     })
 
-
-    // const newPost = {
-    //     id: posts[posts.length - 1].id + 1,
-    //     title: req.body.title,
-    //     content: req.body.content,
-    //     image: req.body.image,
-    //     tags: req.body.tags
-    // }
-
-    // posts.push(newPost);
-
-    // return res.status(201).json(newPost);
 }
 // creo una funzione di update che modifica completamente un post in base all'id, se l'id non è un numero restituisce un errore 400, se l'id non esiste restituisce un errore 404,
 // se il post viene modificato con successo restituisce un messaggio di successo e il post modificato
@@ -172,20 +160,23 @@ function update(req, res) {
         return res.status(400).json({ error: "User error", message: "L'id non è valido" });
     }
 
-    const result = posts.find(post => post.id == id);
+    //creo una costante con i parametri presi dal body
+    const {title, content, image} = req.body;
 
-    if (!result) {
-        return res.status(404).json({ error: "Not Found", message: "Post non trovato" });
-    }
+    //creo una condizione che verifica se sono stati inseriti titolo e immagine
+    const sqlQuery = "UPDATE posts SET title = ?, content = ?, image = ? WHERE id = ?";
+    
+    //creo un array con i parametri della query
+    const parametriQuery = [title, content, image, id];
+     
+    dbConnection.query(sqlQuery, parametriQuery, (error, results) =>{
 
-    result.title = req.body.title ?? result.title;
-    result.content = req.body.content ?? result.content;
-    result.image = req.body.image ?? result.image;
-    result.tags = req.body.tags ?? result.tags;
+        if(error){
+            return res.status(500).json({ error: "DB error", message: `Errore nel modificare il post con id ${id}` })
+        }
 
-    console.log(`Post con id ${id} modificato`);
-    console.log(result);
-    return res.json(result);
+        return res.json({ message: `Post con id ${id} modificato con successo`, post: {id, title, content, image} })
+     })
 };
 
 // creo una funzione di modify che modifica parzialmente un post in base all'id, se l'id non è un numero restituisce un errore 400, se l'id non esiste restituisce un errore 404
